@@ -6,4 +6,4 @@ jobs:
       - image: fpco/stack-build
     steps:
       - checkout
-      - stack test
+      - run: stack test
