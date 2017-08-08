@@ -16,8 +16,6 @@ module Business
     , businessDaysBetween
     ) where
 
-import GHC.Generics
-import qualified Data.Text as T
 
 import Data.Dates
   ( DateTime (DateTime)
@@ -29,9 +27,10 @@ import Data.Dates
   , datesDifference
   , DateTime
   )
-
 import Data.Dates.Formats (parseDateFormat)
-
+import GHC.Generics
+import qualified Data.Text as T
+import Data.Yaml (decodeFileEither)
 import Data.Aeson
   ( FromJSON
   , parseJSON
@@ -39,8 +38,6 @@ import Data.Aeson
   , withObject
   , (.:)
   )
-
-import Data.Yaml (decodeFileEither)
 
 data Config = Config
   { workingDays :: [WeekDay]
