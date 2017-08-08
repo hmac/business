@@ -6,4 +6,11 @@ jobs:
       - image: fpco/stack-build:lts-9.0
     steps:
       - checkout
+      - restore_cache:
+          keys:
+            - v1-stack
       - run: stack --system-ghc test
+      - save_cache:
+          key: v1-stack
+          paths:
+            - ~/.stack
