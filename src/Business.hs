@@ -1,6 +1,10 @@
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 module Business
     (
       Config (..)
+    , loadConfig
     , isBusinessDay
     , datesBetween
     , rollForward
@@ -12,20 +16,68 @@ module Business
     , businessDaysBetween
     ) where
 
+import GHC.Generics
+import qualified Data.Text as T
+
 import Data.Dates
-  ( DateTime
-  , WeekDay
+  ( DateTime (DateTime)
+  , WeekDay (Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday)
   , DateInterval (Days)
   , addInterval
   , minusInterval
   , dateWeekDay
   , datesDifference
+  , DateTime
   )
+
+import Data.Dates.Formats (parseDateFormat)
+
+import Data.Aeson
+  ( FromJSON
+  , parseJSON
+  , withText
+  , withObject
+  , (.:)
+  )
+
+import Data.Yaml (decodeFileEither)
 
 data Config = Config
   { workingDays :: [WeekDay]
   , holidays :: [DateTime]
-  }
+  } deriving (Generic, Show)
+
+instance FromJSON WeekDay where
+  parseJSON = withText "WeekDay" $
+    \v -> case T.unpack v of
+            "monday" -> return Monday
+            "tuesday" -> return Tuesday
+            "wednesday" -> return Wednesday
+            "thursday" -> return Thursday
+            "friday" -> return Friday
+            "saturday" -> return Saturday
+            "sunday" -> return Sunday
+
+instance FromJSON DateTime where
+  parseJSON = withText "DateTime" $
+    \v -> case parseDateFormat "YYYY-MM-DD" (T.unpack v) of
+            Left err -> fail "parse error!"
+            Right date -> return date
+
+instance FromJSON Config where
+  parseJSON = withObject "config" $ \o -> do
+    workingDays <- o .: "working_days"
+    holidays <- o .: "holidays"
+    return Config { workingDays = workingDays, holidays = holidays }
+
+loadConfig :: FilePath -> IO (Maybe Config)
+loadConfig filePath = do
+  config <- decodeFileEither filePath
+  case config of
+    Left err -> do
+      putStrLn "Cannot parse file"
+      return Nothing
+    Right config -> return (Just config)
 
 isBusinessDay :: Config -> DateTime -> Bool
 isBusinessDay config date
