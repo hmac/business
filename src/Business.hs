@@ -1,5 +1,5 @@
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 module Business
     (
@@ -18,8 +18,7 @@ module Business
 
 
 import Data.Dates
-  ( DateTime (DateTime)
-  , WeekDay (Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday)
+  (WeekDay (Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday)
   , DateInterval (Days)
   , addInterval
   , minusInterval
@@ -28,7 +27,6 @@ import Data.Dates
   , DateTime
   )
 import Data.Dates.Formats (parseDateFormat)
-import GHC.Generics
 import qualified Data.Text as T
 import Data.Yaml (decodeFileEither)
 import Data.Aeson
@@ -42,7 +40,7 @@ import Data.Aeson
 data Config = Config
   { workingDays :: [WeekDay]
   , holidays :: [DateTime]
-  } deriving (Generic, Show)
+  } deriving Show
 
 instance FromJSON WeekDay where
   parseJSON = withText "WeekDay" $
@@ -54,27 +52,26 @@ instance FromJSON WeekDay where
             "friday" -> return Friday
             "saturday" -> return Saturday
             "sunday" -> return Sunday
+            _ -> fail "invalid weekday"
 
 instance FromJSON DateTime where
   parseJSON = withText "DateTime" $
     \v -> case parseDateFormat "YYYY-MM-DD" (T.unpack v) of
-            Left err -> fail "parse error!"
+            Left _ -> fail "parse error!"
             Right date -> return date
 
 instance FromJSON Config where
   parseJSON = withObject "config" $ \o -> do
     workingDays <- o .: "working_days"
     holidays <- o .: "holidays"
-    return Config { workingDays = workingDays, holidays = holidays }
+    return Config { workingDays, holidays }
 
 loadConfig :: FilePath -> IO (Maybe Config)
 loadConfig filePath = do
   config <- decodeFileEither filePath
   case config of
-    Left err -> do
-      putStrLn "Cannot parse file"
-      return Nothing
-    Right config -> return (Just config)
+    Left _ -> return Nothing
+    Right c -> return (Just c)
 
 isBusinessDay :: Config -> DateTime -> Bool
 isBusinessDay config date

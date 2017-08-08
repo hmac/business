@@ -16,7 +16,9 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     Business
-  ghc-options:         -Werror -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Wmissing-import-lists
+  ghc-options:         -Werror -Wall -Wincomplete-uni-patterns
+                       -Wincomplete-record-updates -Wmissing-import-lists
+                       -fno-warn-orphans
   build-depends:       base >= 4.7 && < 5
                      , dates >= 0.2.2.1 && < 1
                      , yaml >= 0.8.23.3 && < 1
